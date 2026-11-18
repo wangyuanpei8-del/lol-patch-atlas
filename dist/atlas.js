@@ -1,57 +1,114 @@
-const names = ['海克斯大乱斗','斗魂竞技场','召唤师峡谷','跨模式与客户端'];
-const english = ['ARAM MAYHEM','ARENA','SUMMONER’S RIFT','SHARED UPDATES'];
-const accents = ['#c8a2f4','#d8b67e','#86bfa9','#90b7da'];
-const symbols = ['✧','⚔','♜','◎'];
-const get = id => document.getElementById(id);
-const node = (tag, value) => Object.assign(document.createElement(tag), {textContent:value});
-let patches = [], selected = 0, mode = 0;
-function rows() {
-  const patch = patches[selected], list = patch.modes[mode];
-  const search = get('query').value.trim().toLowerCase();
-  get('title').textContent = names[mode];
-  get('intro').textContent = patch.intro[mode];
-  const output = get('results');
-  output.replaceChildren();
-  let lastGroup = null;
-  for (const [group, title, details] of list) {
-    if (![group,title,...details].join(' ').toLowerCase().includes(search)) continue;
-    if (group !== lastGroup) {
-      const label = node('h3',group); label.className='group'; output.append(label); lastGroup=group;
-    }
-    const line = document.createElement('div'), bullets = document.createElement('ul');
-    line.className='line';
-    for(const detail of details) bullets.append(node('li',detail));
-    line.append(node('strong',title),bullets); output.append(line);
-  }
-  if(!output.children.length) output.textContent=search?'没有匹配的改动。':'本次公告未列出该栏的专属改动。';
-}
-function render() {
-  const p=patches[selected];
-  for(const key of ['version','headline','lead']) get(key).textContent=p[key];
-  get('source').href=p.source;
-  get('date').textContent=p.date+' JST  /  '+p.kind;
-  get('hero').style.setProperty('--art',p.art?'url("'+p.art+'")':'none');
-  get('modes').replaceChildren();
-  names.forEach((name,i)=>{
-    const b=document.createElement('button'); b.className='mode'; b.style.setProperty('--accent',accents[i]);
-    const icon=node('span',symbols[i]), label=node('span',english[i]), count=node('span',p.modes[i].length+' 项');
-    icon.className='sigil';label.className='eng';count.className='counter';
-    b.append(icon,node('strong',name),label,count); b.setAttribute('aria-pressed',mode===i);
-    b.onclick=()=>{mode=i;get('query').value='';render();get('modes').children[i].focus()};get('modes').append(b);
+const $ = id => document.getElementById(id);
+const modes = [
+  ['海克斯大乱斗','海克斯大乱斗','ARAM MAYHEM','✧','#c6a6fa'],
+  ['斗魂竞技场','斗魂竞技场','ARENA','⚔','#e1bf82'],
+  ['召唤师峡谷','召唤师峡谷','SUMMONER’S RIFT','♜','#92cbb3'],
+  ['跨模式','跨模式与客户端','SHARED UPDATES','◎','#9bbfe3']
+];
+const championIds = Object.fromEntries('布兰德:Brand 艾克:Ekko 格温:Gwen 贾克斯:Jax 拉克丝:Lux 希维尔:Sivir 亚索:Yasuo 永恩:Yone 吉格斯:Ziggs 安妮:Annie 阿兹尔（沙皇）:Azir 卑尔维斯:Belveth 布隆:Braum 科加斯:Chogath 凯隐（拉亚斯特）:Kayn 璐璐:Lulu 娜美:Nami 萨勒芬妮:Seraphine 斯卡纳:Skarner 娑娜:Sona 塔里克:Taric 崔丝塔娜:Tristana 薇恩:Vayne 弗拉迪米尔:Vladimir 约里克:Yorick 巴德:Bard 伊泽瑞尔:Ezreal 加里奥:Galio 纳尔:Gnar 奎桑提:KSante 勒布朗:Leblanc 易大师:MasterYi 梅尔:Mel 辛德拉:Syndra 维克兹:Velkoz 蔚:Vi'.split(' ').map(s=>s.split(':')));
+const items={'寒冰霸拳':3025,'纳什之牙':3115,'感电三轮刃':6699};
+const picks=[
+ [['新增 · 全面强化','新增 4 款坦克强化符文'],['防御塔双抗与镀层','防御塔双抗固定为 120'],['防御塔双抗与镀层','每层镀层平分 100 金币']],
+ [['远程英雄模式加成','远程技能急速 20 → 10'],['崔丝塔娜','小炮 W 法强加成升至 120%'],['阿兹尔（沙皇）','沙兵保留竞技场专属规则']],
+ [['冬季峡谷回归','冬季地图重新开放'],['阿兹尔（沙皇）','沙皇普攻距离提升至 550'],['巴德','巴德 Q 法强加成升至 100%']],
+ [['队伍语音分地区测试','北美和大洋洲先行开放'],['回放下载限额','回放调整为每日 50 次'],['DJ 娑娜的互动音乐','施法逐层叠加音轨']]
+];
+function el(tag,text,cls) {const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n}
+const edition=v=>v.split(' · ')[0];
+let archive=[], index=0, mode=0, changes=false, timer;
+const patch=()=>archive[index];
+function entries(p){
+  const seen=new Map();
+  return p.modes[mode].map(([group,title,lines])=>{
+    const key=JSON.stringify([group,title]), n=seen.get(key)||0;
+    seen.set(key,n+1);return {group,title,lines,key:key+'-'+n};
   });
-  rows();
 }
-const archive=get('archive');
-function load(data) {
-  if(!Array.isArray(data)||!data.length||!data.every(p=>typeof p.version==='string' && Array.isArray(p.intro)&&p.intro.length===4&&Array.isArray(p.modes)&&p.modes.length===4&&p.modes.every(m=>Array.isArray(m)&&m.every(r=>Array.isArray(r)&&Array.isArray(r[2])))&&/^https:\/\/www\.leagueoflegends\.com\//.test(p.source)))throw Error('invalid patch archive');
-  const current=selected===0?null:patches[selected]?.version;
-  patches=data; selected=current?Math.max(0,data.findIndex(p=>p.version===current)):0;
-  archive.replaceChildren(...data.map((p,i)=>new Option(p.version+' · '+p.kind,i)));archive.selectedIndex=selected;render();
+function prior(){return archive.slice(index+1).find(p=>p.source.replace(/\/$/,'')===patch().source.replace(/\/$/,''))}
+function visibleEntries(){
+  const all=entries(patch()), older=prior();
+  if(!changes||!older)return all;
+  const old=new Map(entries(older).map(r=>[r.key,r])), result=[];
+  for(const r of all){
+    const prev=old.get(r.key);old.delete(r.key);
+    if(!prev){result.push({...r,status:'新增'});continue}
+    if(JSON.stringify(prev.lines)!==JSON.stringify(r.lines)){
+      const before=prev.lines.filter(x=>!r.lines.includes(x)).map(x=>'修订前 · '+x);
+      const after=r.lines.filter(x=>!prev.lines.includes(x)).map(x=>'修订后 · '+x);
+      result.push({...r,status:'修订',lines:before.length||after.length?[...before,...after]:r.lines});
+    }
+  }
+  for(const row of old.values())result.push({...row,status:'移除'});
+  return result;
 }
-async function read(url){const r=await fetch(url,{cache:'no-cache'});if(!r.ok)throw Error(r.status);return r.json()}
+function route(row){
+  const hash=new URLSearchParams({v:patch().version,m:String(mode)});if(row)hash.set('r',row.key);
+  if(changes)hash.set('diff','1');else hash.set('diff','0');
+  return '#'+hash;
+}
+function focusRow(key){
+  const row=[...$('results').querySelectorAll('.row')].find(r=>r.dataset.key===key);
+  if(row){row.scrollIntoView({block:'start'});row.classList.add('focused');setTimeout(()=>row.classList.remove('focused'),1400)}
+}
+function toast(msg){clearTimeout(timer);$('toast').textContent=msg;timer=setTimeout(()=>$('toast').textContent='',2200)}
+function values(p,line){
+  const split=line.indexOf('→');if(split<0){p.textContent=line;return}
+  p.append(line.slice(0,split+1)+' ',el('strong',line.slice(split+1).trim()));
+}
+function renderRows(){
+  const rows=visibleEntries(), query=$('query').value.trim().toLowerCase();
+  const out=$('results'), toc=$('contents');out.replaceChildren();toc.replaceChildren();
+  const groups=new Map();
+  for(const row of rows.filter(r=>[r.group,r.title,...r.lines].join(' ').toLowerCase().includes(query))){
+    if(!groups.has(row.group)){
+      const section=el('section'); const label=el('h3',row.group,'group');section.append(label);out.append(section);groups.set(row.group,section);
+      const jump=el('button',row.group);jump.onclick=()=>label.scrollIntoView({block:'start'});toc.append(jump);
+    }
+    const block=el('article',null,'row'), title=el('h4'), body=el('div',null,'body');
+    block.dataset.key=row.key;
+    const art=championIds[row.title]?'champion/'+championIds[row.title]:items[row.title]?'item/'+items[row.title]:null;
+    if(art){const img=el('img',null,'portrait');img.alt='';img.loading='lazy';img.src='https://ddragon.leagueoflegends.com/cdn/16.22.1/img/'+art+'.png';img.onerror=()=>img.remove();title.append(img)}
+    title.append(row.title);if(row.status)body.append(el('span',row.status,'delta'));
+    for(const line of row.lines){const p=el('p');values(p,line);body.append(p)}
+    const share=el('button','↗','share');share.title='复制此条链接';share.setAttribute('aria-label','复制「'+row.title+'」链接');
+    share.onclick=async()=>{const link=new URL(route(row),location.href);history.replaceState(null,'',link);try{await navigator.clipboard.writeText(link.href);toast('已复制此条链接')}catch{toast('可复制地址栏中的此条链接')}};
+    block.append(title,body,share);groups.get(row.group).append(block);
+  }
+  if(!out.children.length)out.textContent=query?'本栏没有匹配的改动。':changes?'本次修订没有此模式的条目变化。':'本期未列出本模式的专属改动。';
+}
+function render(){
+  const p=patch(), current=modes[mode], rows=visibleEntries();
+  $('version').textContent=edition(p.version);$('headline').textContent=p.headline;
+  $('date').textContent=p.date+' JST　/　'+p.kind;$('source').href=p.source;
+  $('hero').style.setProperty('--art',/^https:\/\/cmsassets\.rgpub\.io\//.test(p.art)?'url('+JSON.stringify(p.art)+')':'none');
+  document.documentElement.style.setProperty('--accent',current[4]);$('title').textContent=current[1];$('english').textContent=current[2];
+  $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);b.append(el('b',m[3]),m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true})};return b}));
+  $('views').hidden=!prior();$('changes').setAttribute('aria-pressed',changes);$('full').setAttribute('aria-pressed',!changes);
+  let cards=[];
+  if(p.version==='26.23')cards=picks[mode].map(([name,text])=>[rows.find(r=>r.title===name),text]).filter(([r])=>r);
+  if(!cards.length)cards=rows.slice(0,3).map(r=>[r,r.title]);
+  $('brief').hidden=!cards.length;
+  $('cards').replaceChildren(...cards.map(([row,txt])=>{const b=el('button',null,'card');b.append(el('small',row.group),el('strong',txt));b.onclick=()=>{$('query').value='';renderRows();history.replaceState(null,'',route(row));focusRow(row.key)};return b}));
+  renderRows();
+}
+function restore(){
+  const hash=new URLSearchParams(location.hash.slice(1));index=Math.max(0,archive.findIndex(p=>p.version===hash.get('v')));
+  const choice=Number(hash.get('m'));mode=Number.isInteger(choice)&&choice>=0&&choice<4?choice:0;
+  changes=Boolean(prior())&&hash.get('diff')!=='0';$('query').value='';render();
+  if(hash.has('r'))requestAnimationFrame(()=>focusRow(hash.get('r')));
+}
+$('historyBtn').onclick=()=>{
+  const list=$('editions');list.replaceChildren();const groups=new Map();
+  archive.forEach((p,i)=>{const key=edition(p.version);if(!groups.has(key)){const g=el('section');g.append(el('h3','Patch '+key));list.append(g);groups.set(key,g)}
+    const b=el('button',(i===index?'✓　':'')+p.date+'　'+p.kind);b.onclick=()=>{index=i;changes=Boolean(prior());history.pushState(null,'',route());$('archive').close();restore();window.scrollTo(0,0)};groups.get(key).append(b)});
+  $('archive').showModal();
+};
+$('close').onclick=()=>$('archive').close();
+$('query').oninput=renderRows;
+for(const id of ['changes','full'])$(id).onclick=()=>{changes=id==='changes';history.replaceState(null,'',route());render()};
+addEventListener('hashchange',()=>{if(archive.length)restore()});
 async function start(){
-  try{load(await read('patches.json'))}catch{get('results').textContent='补丁数据暂时无法读取。'}
-  try{load(await read('https://raw.githubusercontent.com/wangyuanpei8-del/lol-patch-atlas/main/dist/patches.json'))}catch{/* Keep the bundled edition when GitHub is unavailable. */}
+  try{const res=await fetch('patches.json',{cache:'no-cache'});if(!res.ok)throw Error(res.status);archive=await res.json();restore()}
+  catch{$('results').textContent='补丁读取失败，请刷新页面重试。'}
 }
-archive.onchange=()=>{selected=archive.selectedIndex;get('query').value='';render()};
-get('query').oninput=rows;start();
+start();
