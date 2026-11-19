@@ -27,6 +27,23 @@ jobs:
         with:
           ref: main
       - uses: actions/configure-pages@v5
+      - name: 按文件内容生成缓存版本
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import re
+          from pathlib import Path
+          
+          index = Path("dist/index.html")
+          html = index.read_text(encoding="utf-8")
+          for asset in ("atlas.css", "atlas.js"):
+              digest = hashlib.sha256(index.with_name(asset).read_bytes()).hexdigest()[:16]
+              pattern = rf'((?:href|src)="){re.escape(asset)}(?:\?[^"]*)?"'
+              html, count = re.subn(pattern, lambda match: f'{match[1]}{asset}?v={digest}"', html)
+              if count != 1:
+                  raise ValueError(f"Expected exactly one reference to {asset}, found {count}")
+          index.write_text(html, encoding="utf-8")
+          PY
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
