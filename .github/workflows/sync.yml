@@ -16,6 +16,8 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,6 +25,7 @@ jobs:
       - run: python3 -m pip install beautifulsoup4==4.14.2 opencc-python-reimplemented==0.1.7
       - run: python3 scripts/sync.py
       - name: 有改动时保存
+        id: save
         run: |
           git add dist/patches.json scripts/sources.json
           if ! git diff --cached --quiet; then
@@ -30,4 +33,14 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git commit -m '同步拳头官方版本公告'
             git push origin HEAD:main
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
           fi
+  publish:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true' || github.event_name != 'schedule'
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

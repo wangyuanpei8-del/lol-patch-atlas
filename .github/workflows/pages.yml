@@ -3,10 +3,7 @@ on:
   push:
     branches: [main]
     paths: ['dist/**', '.github/workflows/pages.yml']
-  workflow_run:
-    workflows: ['同步拳头版本公告']
-    types: [completed]
-    branches: [main]
+  workflow_call:
   workflow_dispatch:
 permissions:
   actions: read
@@ -18,7 +15,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
