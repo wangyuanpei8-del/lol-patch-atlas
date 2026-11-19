@@ -106,7 +106,7 @@ function render(){
   $('date').textContent=p.date+' JST　/　'+p.kind;$('source').href=p.source;
   $('hero').style.setProperty('--art',/^https:\/\/cmsassets\.rgpub\.io\//.test(p.art)?'url('+JSON.stringify(p.art)+')':'none');
   document.documentElement.style.setProperty('--accent',current[4]);$('title').textContent=current[1];$('english').textContent=current[2];
-  $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);const icon=el('span',null,'mode-icon mode-icon--'+m[3]);icon.setAttribute('aria-hidden','true');b.append(icon,m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true})};return b}));
+  $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);const icon=el('span',null,'mode-icon mode-icon--'+m[3]);icon.setAttribute('aria-hidden','true');b.append(icon,m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'})};return b}));
   $('views').hidden=!prior();$('changes').setAttribute('aria-pressed',changes);$('full').setAttribute('aria-pressed',!changes);
   let cards=[];
   if(p.version==='26.23')cards=picks[mode].map(([name,text])=>[rows.find(r=>r.title===name),text]).filter(([r])=>r);
@@ -136,3 +136,20 @@ async function start(){
   catch{$('results').textContent='补丁读取失败，请刷新页面重试。'}
 }
 start();
+
+function updateThemeControl() {
+  const light = document.documentElement.dataset.theme === 'light';
+  $('themeBtn').setAttribute('aria-pressed', String(light));
+  $('themeIcon').textContent = light ? '☾' : '☀';
+  $('themeText').textContent = light ? '深色' : '浅色';
+  document.querySelector('meta[name="theme-color"]').content = light ? '#f7f4ec' : '#10141d';
+}
+$('themeBtn').onclick = () => {
+  const root = document.documentElement;
+  root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+  updateThemeControl();
+  try {
+    localStorage.setItem('rift-atlas-theme', root.dataset.theme);
+  } catch {}
+};
+updateThemeControl();

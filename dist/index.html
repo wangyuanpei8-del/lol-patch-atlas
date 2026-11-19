@@ -1,6 +1,13 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10141d"><title>峡谷补丁志 · 英雄联盟更新档案</title><link rel="stylesheet" href="atlas.css?v=mode-badges"></head>
-<body><header><div class="wrap mast"><a class="brand" href="./"><b aria-hidden="true">✦</b>峡谷补丁志 <small>RIFT ATLAS</small></a><button id="historyBtn">◷　版本历史</button></div></header>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10141d"><title>峡谷补丁志 · 英雄联盟更新档案</title><link rel="icon" type="image/svg+xml" href="rift-crest.svg"><script>
+  try {
+    const savedTheme = localStorage.getItem("rift-atlas-theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      document.documentElement.dataset.theme = savedTheme;
+    }
+  } catch {}
+</script><link rel="stylesheet" href="atlas.css?v=mode-badges"></head>
+<body><header><div class="wrap mast"><a class="brand" href="./"><img class="brand-mark" src="rift-crest.svg" width="36" height="36" alt="">峡谷补丁志 <small>RIFT ATLAS</small></a><div class="mast-actions"><button id="themeBtn" type="button" aria-label="浅色模式" aria-pressed="false"><span id="themeIcon" aria-hidden="true">☀</span><span id="themeText">浅色</span></button><button id="historyBtn">◷　版本历史</button></div></div></header>
 <main class="wrap"><section class="hero" id="hero"><div class="heroCopy"><div class="eyebrow">LEAGUE OF LEGENDS <i></i> PATCH NOTES</div><h1>Patch <em id="version">26.23</em></h1><h2 id="headline">冬季峡谷回归</h2><div class="heroMeta"><span id="date"></span><a id="source" target="_blank" rel="noopener">官方公告 ↗</a></div></div></section>
 <nav aria-label="游戏模式" id="modes"></nav>
 <section id="brief"><div class="label"><i></i> 本期重点</div><div id="cards"></div></section>
