@@ -1,34 +1,28 @@
 # 峡谷补丁志
 
-## [🎮 打开网站 · 查看最新补丁](https://wangyuanpei8-del.github.io/lol-patch-atlas/)
+**[打开网站 · 查看补丁](https://wangyuanpei8-del.github.io/lol-patch-atlas/)**
 
-网站由 GitHub Pages 公开托管，定时同步与自动发布均由本仓库的 GitHub Actions 运行。直接打开上方链接即可阅读，也可以把链接分享给朋友。
+从 **26.23** 起归档《英雄联盟》电脑版补丁。默认打开「海克斯大乱斗」，也可切换斗魂竞技场、召唤师峡谷和跨模式更新。手机和桌面均可直接访问。
 
-从 **26.23** 开始，按模式收录《英雄联盟》电脑版的正式补丁和后续公告修订。打开首页默认显示最新一期的**海克斯大乱斗**。
+- 点击**本期重点**跳到详细改动，或在模式内搜索英雄、装备和机制。
+- 从**版本历史**打开旧公告。同版修订可切换「只看变化」和「完整公告」。
+- 点击条目右侧的 **↗** 复制直达链接。点击封面的「官方公告」核对原文。
 
-### 怎么找想看的改动
+## 更新与维护
 
-| 页面板块 | 适合查什么 |
+GitHub Actions 每天在**日本时间 08:00 和 20:00** 检查拳头繁中官网的新公告和最近两个版本的修订。同步脚本保留已收录的历史快照，GitHub Pages 发布静态网页和归档数据。
+
+[官方补丁目录](https://www.leagueoflegends.com/zh-tw/news/tags/patch-notes/) · [同步记录](https://github.com/wangyuanpei8-del/lol-patch-atlas/actions/workflows/sync.yml) · [发布记录](https://github.com/wangyuanpei8-del/lol-patch-atlas/actions/workflows/pages.yml)
+
+| 路径 | 用途 |
 | --- | --- |
-| 海克斯大乱斗 | 强化符文、防御塔机制、英雄的模式专属加成 |
-| 斗魂竞技场 | 竞技场英雄数值、装备和回合机制 |
-| 召唤师峡谷 | 常规英雄平衡、装备、地图和基础玩法 |
-| 跨模式与客户端 | 共通功能、地区限制、客户端与体验修复 |
+| `dist/index.html`、`dist/atlas.css`、`dist/atlas.js` | 网页、样式和交互 |
+| `dist/patches.json` | 公告档案与修订对照 |
+| `scripts/sync.py`、`scripts/sources.json` | 公告同步和去重记录 |
+| `.github/workflows/` | GitHub Actions 同步与发布 |
 
-- **查某个英雄或机制**　先点对应模式，再用栏内搜索框输入关键词。例如在「海克斯大乱斗」搜索「镀层」，可以直接看到 26.23 防御塔的双抗和拆层奖励。
-- **看之前的版本**　点右上角「版本历史」切换；同版本修订可切换「只看变化」与「完整公告」。每条改动右侧的箭头可以复制直达链接。标为「公告修订」的记录保留修订后的完整内容，可以切回前一条记录对照。
-- **核对数值和地区**　点版本封面下的「官方公告」查看拳头原文。页面日期按日本时间显示。
+在仓库根目录运行 `python -m http.server 8000 --directory dist`，然后打开 [localhost:8000](http://localhost:8000)。
 
-### 数据如何更新
+## 素材
 
-GitHub Actions 每天在**日本时间 08:00、20:00** 检查拳头繁中官网，抓取新公告，并复查最近两个版本是否追加了调整。内容有变化时，工作流把数据写入本仓库的 `main` 分支。重新打开或刷新网页即可读取最新版。[拳头官方补丁目录](https://www.leagueoflegends.com/zh-tw/news/tags/patch-notes/) · [查看同步记录或手动运行](https://github.com/wangyuanpei8-del/lol-patch-atlas/actions/workflows/sync.yml)
-
-### 本地预览
-
-下载或克隆本仓库后，在仓库根目录运行：
-
-```sh
-python -m http.server 8000 --directory dist
-```
-
-然后在浏览器打开 [localhost:8000](http://localhost:8000)。网页、归档数据和同步逻辑分别位于 [dist/](dist/)、[dist/patches.json](dist/patches.json) 和 [scripts/sync.py](scripts/sync.py)。
+模式栏采用 Riot 客户端素材。海克斯大乱斗使用 ARAM 徽章，跨模式使用客户端的轮换模式徽章。本项目由玩家维护。[客户端素材索引](https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/gamemodeassets/)

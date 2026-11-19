@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 const modes = [
-  ['海克斯大乱斗','海克斯大乱斗','ARAM MAYHEM','✧','#c6a6fa'],
-  ['斗魂竞技场','斗魂竞技场','ARENA','⚔','#e1bf82'],
-  ['召唤师峡谷','召唤师峡谷','SUMMONER’S RIFT','♜','#92cbb3'],
-  ['跨模式','跨模式与客户端','SHARED UPDATES','◎','#9bbfe3']
+  ['海克斯大乱斗','海克斯大乱斗','ARAM MAYHEM','aram','#c6a6fa'],
+  ['斗魂竞技场','斗魂竞技场','ARENA','arena','#e1bf82'],
+  ['召唤师峡谷','召唤师峡谷','SUMMONER’S RIFT','rift','#92cbb3'],
+  ['跨模式','跨模式与客户端','SHARED UPDATES','shared','#9bbfe3']
 ];
 const championIds = Object.fromEntries('布兰德:Brand 艾克:Ekko 格温:Gwen 贾克斯:Jax 拉克丝:Lux 希维尔:Sivir 亚索:Yasuo 永恩:Yone 亚恒:Zaahen 吉格斯:Ziggs 安妮:Annie 阿兹尔（沙皇）:Azir 卑尔维斯:Belveth 布隆:Braum 科加斯:Chogath 凯隐（拉亚斯特）:Kayn 璐璐:Lulu 娜美:Nami 萨勒芬妮:Seraphine 斯卡纳:Skarner 娑娜:Sona 塔里克:Taric 崔丝塔娜:Tristana 薇恩:Vayne 弗拉迪米尔:Vladimir 约里克:Yorick 巴德:Bard 伊泽瑞尔:Ezreal 加里奥:Galio 纳尔:Gnar 奎桑提:KSante 勒布朗:Leblanc 易大师:MasterYi 梅尔:Mel 辛德拉:Syndra 维克兹:Velkoz 蔚:Vi'.split(' ').map(s=>s.split(':')));
 const items={'歌谣之冠':222530,'困惑（Perplexity）':4015,'符文雕刻者':447108,'涡轮炼金罐':443079,'寒冰霸拳':226662,'纳什之牙':3115,'感电三轮刃':6699};
@@ -106,7 +106,7 @@ function render(){
   $('date').textContent=p.date+' JST　/　'+p.kind;$('source').href=p.source;
   $('hero').style.setProperty('--art',/^https:\/\/cmsassets\.rgpub\.io\//.test(p.art)?'url('+JSON.stringify(p.art)+')':'none');
   document.documentElement.style.setProperty('--accent',current[4]);$('title').textContent=current[1];$('english').textContent=current[2];
-  $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);b.append(el('b',m[3]),m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true})};return b}));
+  $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);const icon=el('span',null,'mode-icon mode-icon--'+m[3]);icon.setAttribute('aria-hidden','true');b.append(icon,m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true})};return b}));
   $('views').hidden=!prior();$('changes').setAttribute('aria-pressed',changes);$('full').setAttribute('aria-pressed',!changes);
   let cards=[];
   if(p.version==='26.23')cards=picks[mode].map(([name,text])=>[rows.find(r=>r.title===name),text]).filter(([r])=>r);
