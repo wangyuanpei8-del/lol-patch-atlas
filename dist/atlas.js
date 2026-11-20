@@ -5,14 +5,15 @@ const modes = [
   ['召唤师峡谷','召唤师峡谷','SUMMONER’S RIFT','rift','#92cbb3'],
   ['跨模式','跨模式与客户端','SHARED UPDATES','shared','#9bbfe3']
 ];
-const championIds = Object.fromEntries('布兰德:Brand 艾克:Ekko 格温:Gwen 贾克斯:Jax 拉克丝:Lux 希维尔:Sivir 亚索:Yasuo 永恩:Yone 亚恒:Zaahen 吉格斯:Ziggs 安妮:Annie 阿兹尔（沙皇）:Azir 卑尔维斯:Belveth 布隆:Braum 科加斯:Chogath 凯隐（拉亚斯特）:Kayn 璐璐:Lulu 娜美:Nami 萨勒芬妮:Seraphine 斯卡纳:Skarner 娑娜:Sona 塔里克:Taric 崔丝塔娜:Tristana 薇恩:Vayne 弗拉迪米尔:Vladimir 约里克:Yorick 巴德:Bard 伊泽瑞尔:Ezreal 加里奥:Galio 纳尔:Gnar 奎桑提:KSante 勒布朗:Leblanc 易大师:MasterYi 梅尔:Mel 辛德拉:Syndra 维克兹:Velkoz 蔚:Vi'.split(' ').map(s=>s.split(':')));
-const items={'歌谣之冠':222530,'困惑（Perplexity）':4015,'符文雕刻者':447108,'涡轮炼金罐':443079,'寒冰霸拳':226662,'纳什之牙':3115,'感电三轮刃':6699};
-const picks=[
- [['新增 · 全面强化','新增 4 款坦克强化符文'],['防御塔双抗与镀层','防御塔双抗固定为 120'],['防御塔双抗与镀层','每层镀层平分 100 金币']],
- [['远程英雄模式加成','远程技能急速 20 → 10'],['崔丝塔娜','小炮 W 法强加成升至 120%'],['阿兹尔（沙皇）','沙兵保留竞技场专属规则']],
- [['冬季峡谷回归','冬季地图重新开放'],['阿兹尔（沙皇）','沙皇普攻距离提升至 550'],['巴德','巴德 Q 法强加成升至 100%']],
- [['队伍语音分地区测试','北美和大洋洲先行开放'],['回放下载限额','回放调整为每日 50 次'],['DJ 娑娜的互动音乐','施法逐层叠加音轨']]
-];
+// Name -> Data Dragon image id, refreshed by scripts/sync.py.
+let names={version:'',champions:{},items:{}};
+function portrait(title){
+  const plain=title.replace(/（.*?）|\(.*?\)/g,'').trim();
+  const champ=names.champions[title]||names.champions[plain];
+  if(champ)return 'champion/'+champ;
+  const item=names.items[title]||names.items[plain];
+  return item?'item/'+item:null;
+}
 function el(tag,text,cls) {const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n}
 const edition=v=>v.split(' · ')[0];
 let archive=[], index=0, mode=0, changes=false, timer;
@@ -28,7 +29,7 @@ function prior(){return archive.slice(index+1).find(p=>p.source.replace(/\/$/,''
 function visibleEntries(){
   const all=entries(patch()), older=prior();
   if(!changes||!older)return all;
-  const old=new Map(entries(older,older.comparisonModes || older.modes).map(r=>[r.key,r])), result=[];
+  const old=new Map(entries(older).map(r=>[r.key,r])), result=[];
   for(const r of all){
     const prev=old.get(r.key);old.delete(r.key);
     if(!prev){result.push({...r,status:'新增'});continue}
@@ -66,8 +67,8 @@ function renderRows(){
     }
     const block=el('article',null,'row'), title=el('h4'), body=el('div',null,'body');
     block.dataset.key=row.key;
-    const art=championIds[row.title]?'champion/'+championIds[row.title]:items[row.title]?'item/'+items[row.title]:null;
-    if(art){const img=el('img',null,'portrait');img.alt='';img.loading='lazy';img.src='https://ddragon.leagueoflegends.com/cdn/16.22.1/img/'+art+'.png';img.onerror=()=>img.remove();title.append(img)}
+    const art=names.version&&portrait(row.title);
+    if(art){const img=el('img',null,'portrait');img.alt='';img.loading='lazy';img.src='https://ddragon.leagueoflegends.com/cdn/'+names.version+'/img/'+art+'.png';img.onerror=()=>img.remove();title.append(img)}
     title.append(row.title);if(row.status)body.append(el('span',row.status,'delta'));
     for(const line of row.lines){
       const p=el('p');
@@ -102,14 +103,14 @@ function autoHighlights(rows) {
 }
 function render(){
   const p=patch(), current=modes[mode], rows=visibleEntries();
-  $('version').textContent=edition(p.version);$('headline').textContent=p.headline;
+  $('version').textContent=edition(p.version);$('headline').textContent=p.headline;$('lead').textContent=p.lead||'';
   $('date').textContent=p.date+' JST　/　'+p.kind;$('source').href=p.source;
   $('hero').style.setProperty('--art',/^https:\/\/cmsassets\.rgpub\.io\//.test(p.art)?'url('+JSON.stringify(p.art)+')':'none');
   document.documentElement.style.setProperty('--accent',current[4]);$('title').textContent=current[1];$('english').textContent=current[2];
   $('modes').replaceChildren(...modes.map((m,i)=>{const b=el('button');b.style.setProperty('--tint',m[4]);const icon=el('span',null,'mode-icon mode-icon--'+m[3]);icon.setAttribute('aria-hidden','true');b.append(icon,m[0]);b.setAttribute('aria-pressed',i===mode);b.onclick=()=>{mode=i;$('query').value='';history.replaceState(null,'',route());render();$('modes').children[i].focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'})};return b}));
   $('views').hidden=!prior();$('changes').setAttribute('aria-pressed',changes);$('full').setAttribute('aria-pressed',!changes);
   let cards=[];
-  if(p.version==='26.23')cards=picks[mode].map(([name,text])=>[rows.find(r=>r.title===name),text]).filter(([r])=>r);
+  if(p.picks&&p.picks[mode])cards=p.picks[mode].map(([name,text])=>[rows.find(r=>r.title===name),text]).filter(([r])=>r);
   if(!cards.length)cards=autoHighlights(rows);
   $('brief').hidden=!cards.length;
   $('cards').replaceChildren(...cards.map(([row,txt])=>{const b=el('button',null,'card');b.append(el('small',row.group),el('strong',txt));b.onclick=()=>{$('query').value='';renderRows();history.replaceState(null,'',route(row));focusRow(row.key)};return b}));
@@ -132,7 +133,8 @@ $('query').oninput=renderRows;
 for(const id of ['changes','full'])$(id).onclick=()=>{changes=id==='changes';history.replaceState(null,'',route());render()};
 addEventListener('hashchange',()=>{if(archive.length)restore()});
 async function start(){
-  try{const res=await fetch('patches.json',{cache:'no-cache'});if(!res.ok)throw Error(res.status);archive=await res.json();restore()}
+  const loadNames=fetch('names.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(n=>{if(n)names=n}).catch(()=>{});
+  try{const res=await fetch('patches.json',{cache:'no-cache'});if(!res.ok)throw Error(res.status);archive=await res.json();await loadNames;restore()}
   catch{$('results').textContent='补丁读取失败，请刷新页面重试。'}
 }
 start();
