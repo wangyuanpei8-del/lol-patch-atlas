@@ -4,6 +4,7 @@ on:
     - cron: '0 11,23 * * *'
   workflow_dispatch:
   push:
+    branches: [main]  # other branches would sync main's code and push to main
     paths:
       - '.github/workflows/sync.yml'
       - 'scripts/sync.py'
