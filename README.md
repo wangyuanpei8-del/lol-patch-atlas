@@ -10,14 +10,15 @@
 
 ## 更新与维护
 
-GitHub Actions 每天在**日本时间 08:00 和 20:00** 检查拳头繁中官网的新公告和最近两个版本的修订。同步脚本保留已收录的历史快照，GitHub Pages 发布静态网页和归档数据。
+GitHub Actions 每天在**日本时间 08:00 和 20:00** 检查拳头繁中官网的新公告和最近两个版本的修订。同步脚本保留每篇公告的首发版和最近两次修订，单篇公告解析失败只会跳过该篇并在日志里留下警告。GitHub Pages 发布静态网页和归档数据。
 
 [官方补丁目录](https://www.leagueoflegends.com/zh-tw/news/tags/patch-notes/) · [同步记录](https://github.com/wangyuanpei8-del/lol-patch-atlas/actions/workflows/sync.yml) · [发布记录](https://github.com/wangyuanpei8-del/lol-patch-atlas/actions/workflows/pages.yml)
 
 | 路径 | 用途 |
 | --- | --- |
 | `dist/index.html`、`dist/atlas.css`、`dist/atlas.js` | 网页、样式和交互 |
-| `dist/patches.json` | 公告档案与修订对照 |
+| `dist/patches.json` | 公告档案与修订对照（可选 `picks` 字段手写每个模式的本期重点） |
+| `dist/names.json` | 英雄、装备中文名到头像图片的对照表，同步时从 Data Dragon 自动更新 |
 | `scripts/sync.py`、`scripts/sources.json` | 公告同步和去重记录 |
 | `.github/workflows/` | GitHub Actions 同步与发布 |
 
@@ -25,4 +26,4 @@ GitHub Actions 每天在**日本时间 08:00 和 20:00** 检查拳头繁中官�
 
 ## 素材
 
-模式栏采用 Riot 客户端素材。海克斯大乱斗使用 ARAM 徽章，跨模式使用客户端的轮换模式徽章。本项目由玩家维护。[客户端素材索引](https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/gamemodeassets/)
+模式栏采用 Riot 客户端素材。海克斯大乱斗使用 ARAM 徽章，跨模式使用客户端的轮换模式徽章。本项目由玩家维护，与 Riot Games 无关，亦未获其认可。[客户端素材索引](https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/gamemodeassets/)
